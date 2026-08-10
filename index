@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Voice Notes</title>
+<style>
+  :root {
+    --bg: #0f1115;
+    --panel: #171a21;
+    --panel-2: #1f232c;
+    --border: #2a2f3a;
+    --text: #e8eaed;
+    --text-dim: #9aa0ab;
+    --accent: #4f8cff;
+    --accent-dim: #2c4a86;
+    --danger: #ff5c5c;
+    --radius: 12px;
+  }
+  [data-theme="light"] {
+    --bg: #f4f5f7;
+    --panel: #ffffff;
+    --panel-2: #f0f1f4;
+    --border: #dde1e7;
+    --text: #1c1e21;
+    --text-dim: #666b74;
+    --accent: #2563eb;
+    --accent-dim: #dbe6ff;
+    --danger: #d9364a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    -webkit-tap-highlight-color: transparent;
+  }
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--bg);
+    padding: 14px 16px 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+  h1 {
+    font-size: 18px;
+    margin: 0;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+  }
+  .icon-btn {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    width: 34px;
+    height: 34px;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .toolbar { display: flex; gap: 8px; }
+  input[type="search"] {
+    flex: 1;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 14px;
+  }
+  main {
+    padding: 14px 16px 100px;
+    max-width: 680px;
+    margin: 0 auto;
+  }
+  .composer {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px;
+    margin-bottom: 18px;
+  }
+  .composer-input-wrap {
+    position: relative;
+  }
+  .mic-btn {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  }
+  .mic-btn:active {
+    transform: scale(0.94);
+  }
+  textarea#composerInput {
+    width: 100%;
+    min-height: 110px;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 16px;
+    line-height: 1.5;
+    padding: 10px 12px;
+    resize: vertical;
+    font-family: inherit;
+  }
+  textarea#composerInput:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  .composer-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+  }
+  .hint { font-size: 12px; color: var(--text-dim); }
+  button.primary {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button.primary:disabled { opacity: 0.4; }
+  .notes-list { display: flex; flex-direction: column; gap: 10px; }
+  .note-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+  }
+  .note-text {
+    font-size: 15px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .note-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+  .note-actions { display: flex; gap: 12px; }
+  .note-actions span { cursor: pointer; }
+  .note-actions span:hover { color: var(--accent); }
+  .empty {
+    text-align: center;
+    color: var(--text-dim);
+    padding: 60px 20px;
+    font-size: 14px;
+  }
+  footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    padding: 10px 16px;
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+  footer button {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  footer button.danger { color: var(--danger); }
+  .editing { border-color: var(--accent) !important; }
+</style>
+</head>
+<body data-theme="dark">
+
+<header>
+  <div class="title-row">
+    <h1>🎙 Voice Notes</h1>
+    <button class="icon-btn" id="themeToggle" title="Toggle theme">🌙</button>
+  </div>
+  <div class="toolbar">
+    <input type="search" id="searchBox" placeholder="Search notes…">
+  </div>
+</header>
+
+<main>
+  <div class="composer">
+    <div class="composer-input-wrap">
+      <textarea id="composerInput" placeholder="Tap the mic or tap here, switch to FUTO Voice keyboard, and start dictating…" autofocus></textarea>
+      <button class="mic-btn" id="micBtn" title="Focus & dictate">🎤</button>
+    </div>
+    <div class="composer-actions">
+      <span class="hint" id="charCount">0 characters</span>
+      <button class="primary" id="saveBtn">Save note</button>
+    </div>
+  </div>
+
+  <div class="notes-list" id="notesList"></div>
+  <div class="empty" id="emptyState" style="display:none;">No notes yet — dictate something above.</div>
+</main>
+
+<footer>
+  <button id="exportMdBtn">Export .md</button>
+  <button id="exportTxtBtn">Export .txt</button>
+  <button id="clearAllBtn" class="danger">Clear all</button>
+</footer>
+
+<script>
+(function () {
+  const STORAGE_KEY = 'voiceNotes.entries.v1';
+  const THEME_KEY = 'voiceNotes.theme.v1';
+
+  const composerInput = document.getElementById('composerInput');
+  const micBtn = document.getElementById('micBtn');
+  const saveBtn = document.getElementById('saveBtn');
+  const charCount = document.getElementById('charCount');
+  const notesList = document.getElementById('notesList');
+  const emptyState = document.getElementById('emptyState');
+  const searchBox = document.getElementById('searchBox');
+  const themeToggle = document.getElementById('themeToggle');
+  const exportMdBtn = document.getElementById('exportMdBtn');
+  const exportTxtBtn = document.getElementById('exportTxtBtn');
+  const clearAllBtn = document.getElementById('clearAllBtn');
+
+  let notes = [];
+  let editingId = null;
+  let filter = '';
+
+  function loadNotes() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      notes = raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      notes = [];
+    }
+  }
+
+  function persistNotes() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(notes));
+  }
+
+  function fmtTime(ts) {
+    const d = new Date(ts);
+    const now = new Date();
+    const sameDay = d.toDateString() === now.toDateString();
+    const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (sameDay) return time;
+    return d.toLocaleDateString([], { day: '2-digit', month: 'short' }) + ' · ' + time;
+  }
+
+  function render() {
+    const q = filter.trim().toLowerCase();
+    const visible = notes
+      .filter(n => !q || n.text.toLowerCase().includes(q))
+      .sort((a, b) => b.updatedAt - a.updatedAt);
+
+    notesList.innerHTML = '';
+    emptyState.style.display = visible.length ? 'none' : 'block';
+    if (!visible.length && q) {
+      emptyState.textContent = 'No notes match your search.';
+    } else {
+      emptyState.textContent = 'No notes yet — dictate something above.';
+    }
+
+    for (const note of visible) {
+      const card = document.createElement('div');
+      card.className = 'note-card';
+
+      const textEl = document.createElement('div');
+      textEl.className = 'note-text';
+      textEl.textContent = note.text;
+
+      const meta = document.createElement('div');
+      meta.className = 'note-meta';
+
+      const time = document.createElement('span');
+      time.textContent = fmtTime(note.updatedAt);
+
+      const actions = document.createElement('div');
+      actions.className = 'note-actions';
+
+      const editSpan = document.createElement('span');
+      editSpan.textContent = 'Edit';
+      editSpan.onclick = () => startEdit(note.id);
+
+      const copySpan = document.createElement('span');
+      copySpan.textContent = 'Copy';
+      copySpan.onclick = () => copyNote(note.text, copySpan);
+
+      const delSpan = document.createElement('span');
+      delSpan.textContent = 'Delete';
+      delSpan.onclick = () => deleteNote(note.id);
+
+      actions.append(editSpan, copySpan, delSpan);
+      meta.append(time, actions);
+      card.append(textEl, meta);
+      notesList.appendChild(card);
+    }
+  }
+
+  function copyNote(text, el) {
+    navigator.clipboard?.writeText(text).then(() => {
+      const orig = el.textContent;
+      el.textContent = 'Copied!';
+      setTimeout(() => (el.textContent = orig), 1000);
+    });
+  }
+
+  function startEdit(id) {
+    const note = notes.find(n => n.id === id);
+    if (!note) return;
+    editingId = id;
+    composerInput.value = note.text;
+    composerInput.classList.add('editing');
+    composerInput.focus();
+    updateCharCount();
+    saveBtn.textContent = 'Update note';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function deleteNote(id) {
+    if (!confirm('Delete this note?')) return;
+    notes = notes.filter(n => n.id !== id);
+    persistNotes();
+    render();
+  }
+
+  function saveNote() {
+    const text = composerInput.value.trim();
+    if (!text) return;
+
+    if (editingId) {
+      const note = notes.find(n => n.id === editingId);
+      if (note) {
+        note.text = text;
+        note.updatedAt = Date.now();
+      }
+      editingId = null;
+      saveBtn.textContent = 'Save note';
+      composerInput.classList.remove('editing');
+    } else {
+      notes.push({
+        id: 'n_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+        text,
+        createdAt: Date.now(),
+        updatedAt: Date.now()
+      });
+    }
+
+    persistNotes();
+    composerInput.value = '';
+    updateCharCount();
+    render();
+  }
+
+  function updateCharCount() {
+    const n = composerInput.value.length;
+    charCount.textContent = n + ' character' + (n === 1 ? '' : 's');
+  }
+
+  function downloadFile(filename, content, mime) {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function exportMarkdown() {
+    if (!notes.length) return alert('No notes to export.');
+    const sorted = [...notes].sort((a, b) => a.createdAt - b.createdAt);
+    let md = '# Voice Notes\n\n';
+    for (const n of sorted) {
+      md += `### ${new Date(n.createdAt).toLocaleString()}\n\n${n.text}\n\n---\n\n`;
+    }
+    downloadFile('voice-notes.md', md, 'text/markdown');
+  }
+
+  function exportText() {
+    if (!notes.length) return alert('No notes to export.');
+    const sorted = [...notes].sort((a, b) => a.createdAt - b.createdAt);
+    let txt = '';
+    for (const n of sorted) {
+      txt += `[${new Date(n.createdAt).toLocaleString()}]\n${n.text}\n\n`;
+    }
+    downloadFile('voice-notes.txt', txt, 'text/plain');
+  }
+
+  function clearAll() {
+    if (!notes.length) return;
+    if (!confirm('Delete ALL notes? This cannot be undone.')) return;
+    notes = [];
+    persistNotes();
+    render();
+  }
+
+  function initTheme() {
+    const saved = localStorage.getItem(THEME_KEY) || 'dark';
+    document.body.setAttribute('data-theme', saved);
+    themeToggle.textContent = saved === 'dark' ? '🌙' : '☀️';
+  }
+
+  function toggleTheme() {
+    const current = document.body.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    document.body.setAttribute('data-theme', next);
+    localStorage.setItem(THEME_KEY, next);
+    themeToggle.textContent = next === 'dark' ? '🌙' : '☀️';
+  }
+
+  // Events
+  micBtn.addEventListener('click', () => {
+    composerInput.focus();
+    const len = composerInput.value.length;
+    composerInput.setSelectionRange(len, len);
+  });
+  saveBtn.addEventListener('click', saveNote);
+  composerInput.addEventListener('input', updateCharCount);
+  composerInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      saveNote();
+    }
+  });
+  searchBox.addEventListener('input', (e) => {
+    filter = e.target.value;
+    render();
+  });
+  themeToggle.addEventListener('click', toggleTheme);
+  exportMdBtn.addEventListener('click', exportMarkdown);
+  exportTxtBtn.addEventListener('click', exportText);
+  clearAllBtn.addEventListener('click', clearAll);
+
+  // Init
+  initTheme();
+  loadNotes();
+  render();
+})();
+</script>
+
+</body>
+</html>
